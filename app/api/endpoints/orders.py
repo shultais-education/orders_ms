@@ -16,5 +16,6 @@ async def get_orders(order_service: OrderServiceDep):
 
 @orders_router.post("", response_model=OrderDetail, summary="Создание заказа")
 async def add_order(order: OrderRequest, order_service: OrderServiceDep):
+    order = order_service.build_order_from_schema(order)
     order = await order_service.add_order(order)
     return order

@@ -1,6 +1,7 @@
 from app.models import Order
 from app.repositories.orders import OrderRepository
 from sqlalchemy import Sequence
+from app.schemas.order import OrderRequest
 
 
 class OrderService:
@@ -9,6 +10,10 @@ class OrderService:
 
     def __init__(self, repository: OrderRepository):
         self.repository = repository
+
+    @staticmethod
+    def build_order_from_schema(data: OrderRequest) -> Order:
+        return Order.model_validate(data)
 
     async def add_order(self, order: Order) -> Order:
         return await self.repository.add_order(order=order)
