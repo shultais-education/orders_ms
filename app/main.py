@@ -1,13 +1,16 @@
 from fastapi import FastAPI
-
-app = FastAPI()
-
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+from app.api.endpoints.orders import orders_router
+from contextlib import asynccontextmanager
+from app.db.session import async_engine
 
 
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    yield
+
+    await async_engine.dispose()
+
+
+app = FastAPI(lifespan=lifespan, title="API заказов", description="Микросервис для управления заказами")
+app.include_router(orders_router)
