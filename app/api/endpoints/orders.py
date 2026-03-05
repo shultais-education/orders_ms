@@ -52,7 +52,7 @@ async def add_order(order: OrderRequest, order_service: OrderServiceDep, http_cl
             "delay": 0
         })
 
-    sender_response = await http_client.post(f"http://127.0.0.1:8010/messages", json=emails)
+    sender_response = await http_client.post(f"http://127.0.0.1:8010/messages", json=emails, headers={"X-API-Key": "ABC"})
     if sender_response.status_code != 202:
         print(sender_response.json())
 
