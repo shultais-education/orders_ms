@@ -32,7 +32,29 @@ async def add_order(order: OrderRequest, order_service: OrderServiceDep, http_cl
                 "type": "value_error.house_not_found"
             }]
         )
+    else:
+        raise HTTPException(house_info_response.status_code, detail=[{}])
 
+    emails = list()
+
+    emails.append({
+        "subject": f"Новая заявка на дом {house_info['name']}",
+        "text": f"Вам поступила новая заявка на дома {house_info['name']} от пользователя {order.user_name}.",
+        "to": f"{order.house_id}-manger@example.com",
+        "delay": 0
+    })
+
+    if order.user_email:
+        emails.append({
+            "subject": f"Вы забронировали дом {house_info['name']}",
+            "text": f"Здравствуйте, {order.user_name}!\n\nВы успешно забронировали дом {house_info['name']}.",
+            "to": order.user_email,
+            "delay": 0
+        })
+
+    sender_response = await http_client.post(f"http://127.0.0.1:8010/messages", json=emails)
+    if sender_response.status_code != 202:
+        print(sender_response.json())
 
     order = order_service.build_order_from_schema(order)
     order = await order_service.add_order(order)
