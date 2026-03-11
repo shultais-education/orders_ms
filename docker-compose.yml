@@ -26,6 +26,8 @@ services:
     container_name: orders-ms-app
     ports:
       - "8020:8000"    # внешний и внутренний порты
+    extra_hosts:
+      - "ms.local:192.168.100.2"
     env_file:
       - .env
     environment:
