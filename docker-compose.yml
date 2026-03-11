@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: bitnami/postgresql:latest
+    container_name: orders-ms-postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRESQL_DATABASE: orders
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/bitnami/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: orders-ms-app
+    ports:
+      - "8020:8000"    # внешний и внутренний порты
+    env_file:
+      - .env
+    environment:
+      DB_USERNAME: user
+      DB_PASSWORD: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      HOUSE_INFO_ENDPOINT: http://ms.local/api/houses
+      MESSAGES_ENDPOINT: http://ms.local/api/messages
+      USER_INFO_ENDPOINT: http://ms.local/api/users
+    depends_on:
+      postgres:
+        condition: service_healthy
+    working_dir: /
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /var/www/SE/Courses/fastapi/microservices/docker_data/orders_ms/postgresql
+      o: bind
+
+networks:
+  app-network:
+    driver: bridge
