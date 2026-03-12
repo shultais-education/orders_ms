@@ -12,5 +12,5 @@ async def lifespan(app: FastAPI):
     await async_engine.dispose()
 
 
-app = FastAPI(lifespan=lifespan, title="API заказов", description="Микросервис для управления заказами")
+app = FastAPI(lifespan=lifespan, title="API заказов", description="Микросервис для управления заказами", root_path="/api")
 app.include_router(orders_router)
