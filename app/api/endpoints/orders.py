@@ -6,6 +6,7 @@ from app.core.config import settings
 from app.schemas.order import OrderRequest, OrderDetail, Order
 from app.api.dependencies.orders import OrderServiceDep
 from app.api.dependencies.http_client import HTTPClientDep
+from app.api.dependencies.security import JWTDep
 
 
 orders_router = APIRouter(prefix="/orders", tags=["orders"])
@@ -17,7 +18,7 @@ async def get_orders(order_service: OrderServiceDep):
 
 
 @orders_router.post("", response_model=OrderDetail, summary="Создание заказа")
-async def add_order(order: OrderRequest, order_service: OrderServiceDep, http_client: HTTPClientDep):
+async def add_order(jwt: JWTDep, order: OrderRequest, order_service: OrderServiceDep, http_client: HTTPClientDep):
 
     house_info_response = await http_client.get(f"{settings.HOUSE_INFO_ENDPOINT}/{order.house_id}")
 
@@ -36,7 +37,7 @@ async def add_order(order: OrderRequest, order_service: OrderServiceDep, http_cl
         raise HTTPException(house_info_response.status_code, detail=[{}])
 
     user_info_response = await http_client.get(
-        f"{settings.USER_INFO_ENDPOINT}/{order.user_id}",
+        f"{settings.USER_INFO_ENDPOINT}/{jwt['user_id']}",
         headers={"X-API-Key": settings.AUTH_API_KEY}
     )
 
@@ -47,8 +48,8 @@ async def add_order(order: OrderRequest, order_service: OrderServiceDep, http_cl
             status_code=422,
             detail=[
                 {
-                    "loc": ["body", "user_id"],
-                    "msg": f"Пользователь {order.user_id} не найден",
+                    "loc": ["body"],
+                    "msg": f"Пользователь {jwt['user_id']} не найден",
                     "type": "value_error.user_not_found"
                 }]
         )
@@ -70,8 +71,6 @@ async def add_order(order: OrderRequest, order_service: OrderServiceDep, http_cl
         "to": user_info['email'],
         "delay": 0
     })
-
-    print(emails)
 
     sender_response = await http_client.post(
         settings.MESSAGES_ENDPOINT, json=emails, headers={"X-API-Key": settings.SENDER_API_KEY})

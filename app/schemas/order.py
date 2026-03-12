@@ -20,7 +20,6 @@ class OrderDetail(BaseModel):
 
 class OrderRequest(BaseModel):
     house_id: int
-    user_id: int
 
 class Order(BaseModel):
     house_id: int
